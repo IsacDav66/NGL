@@ -11,18 +11,20 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
-// --- NUEVO: Configuración de Cabeceras de Seguridad (Para evitar el error de CSP) ---
+// --- Desactivar restricciones de seguridad para que carguen fuentes y estilos ---
 app.use((req, res, next) => {
     res.setHeader("Content-Security-Policy", "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; font-src * data:; img-src * data:;");
+    res.setHeader("X-Content-Type-Options", "nosniff");
     next();
 });
 
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static('public'));
+// IMPORTANTE: Servir archivos estáticos con el prefijo /ngl
+app.use('/ngl/assets', express.static(path.join(__dirname, 'assets')));
 
-// RUTA: Formulario de envío (IMPORTANTE: Debe tener el "/" inicial)
-app.get('/u/tu-usuario', async (req, res) => {
+// RUTA: Formulario de envío
+app.get('/ngl/u/tu-usuario', async (req, res) => {
     try {
         const result = await pool.query('SELECT "userId", pushname, "phoneNumber" FROM users WHERE pushname IS NOT NULL ORDER BY pushname ASC');
         res.render('index', { usuarios: result.rows });
@@ -33,7 +35,7 @@ app.get('/u/tu-usuario', async (req, res) => {
 });
 
 // RUTA: Guardar mensaje
-app.post('/send', async (req, res) => {
+app.post('/ngl/send', async (req, res) => {
     const { question, target_user_id } = req.body;
     if (question) {
         try {
@@ -46,12 +48,12 @@ app.post('/send', async (req, res) => {
             res.status(500).send("Error");
         }
     } else {
-        res.redirect('/ngl/u/tu-usuario'); // Con prefijo para Nginx
+        res.redirect('/ngl/u/tu-usuario');
     }
 });
 
 // RUTA: Inbox
-app.get('/inbox', async (req, res) => {
+app.get('/ngl/inbox', async (req, res) => {
     try {
         const query = `
             SELECT n.*, u.pushname, u."phoneNumber" 
@@ -67,4 +69,4 @@ app.get('/inbox', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Corriendo en puerto ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 NGL escuchando en puerto ${PORT}`));
