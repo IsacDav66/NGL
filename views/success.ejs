@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Mensaje Enviado! - NGL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #ff0055, #4400ff);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            text-align: center;
+        }
+
+        .container {
+            background: white;
+            padding: 50px 30px;
+            border-radius: 35px;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            color: #1a1a1a;
+            animation: popIn 0.5s cubic-bezier(0.26, 0.53, 0.74, 1.48);
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .checkmark-wrapper {
+            width: 90px;
+            height: 90px;
+            background: #4cd137;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 25px;
+            box-shadow: 0 10px 20px rgba(76, 209, 55, 0.3);
+        }
+
+        .checkmark {
+            color: white;
+            font-size: 45px;
+            font-weight: bold;
+        }
+
+        h1 {
+            font-weight: 800;
+            font-size: 26px;
+            margin: 0 0 10px 0;
+        }
+
+        p {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 35px;
+            line-height: 1.5;
+        }
+
+        .btn {
+            display: block;
+            background: #000;
+            color: white;
+            text-decoration: none;
+            padding: 18px;
+            border-radius: 50px;
+            font-weight: 800;
+            transition: transform 0.2s, background 0.3s;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: #333;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="checkmark-wrapper">
+            <span class="checkmark">✓</span>
+        </div>
+        <h1>¡Enviado!</h1>
+        <p>Tu mensaje anónimo ha sido entregado.</p>
+
+        <a href="/u/tu-usuario" class="btn">Enviar otro mensaje</a>
+    </div>
+
+</body>
+
+</html>

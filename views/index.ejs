@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NGL - Mensajes Anónimos</title>
+    <!-- Google Fonts para un look moderno -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff0055;
+            --secondary: #4400ff;
+            --bg-card: #ffffff;
+            --text-main: #1a1a1a;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background-attachment: fixed;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background: var(--bg-card);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            font-weight: 800;
+            margin-bottom: 5px;
+            color: var(--text-main);
+            font-size: 24px;
+        }
+
+        p {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        /* Estilo del Buscador */
+        .search-box {
+            position: relative;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #f0f0f0;
+            border-radius: 15px;
+            box-sizing: border-box;
+            font-size: 16px;
+            /* Evita zoom automático en iOS */
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 10px rgba(255, 0, 85, 0.1);
+        }
+
+        /* Lista de Resultados */
+        .results-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            z-index: 100;
+            margin-top: 8px;
+            padding: 0;
+            list-style: none;
+            border: 1px solid #eee;
+        }
+
+        .results-list li {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f5f5f5;
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+
+        .results-list li:hover {
+            background: #f0f0f0;
+        }
+
+        .results-list li b {
+            color: var(--primary);
+        }
+
+        /* Usuario Seleccionado */
+        .selected-badge {
+            display: none;
+            background: #fff0f5;
+            color: var(--primary);
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            border: 1px solid var(--primary);
+        }
+
+        textarea {
+            margin-bottom: 20px;
+            resize: none;
+        }
+
+        button {
+            background: #000;
+            color: #fff;
+            border: none;
+            padding: 16px;
+            width: 100%;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        /* Responsive para pantallas muy pequeñas */
+        @media (max-width: 350px) {
+            .card {
+                padding: 20px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <h2>@anon_chat</h2>
+        <p>Envíame mensajes anónimos</p>
+
+        <form action="/send" method="POST" id="nglForm">
+            <!-- Badge de Selección -->
+            <div id="userBadge" class="selected-badge">Para: <span id="selectedName"></span></div>
+
+            <div class="search-box">
+                <input type="text" id="userInput" placeholder="🔍 Buscar persona..." autocomplete="off">
+                <ul id="resultsList" class="results-list"></ul>
+            </div>
+
+            <input type="hidden" name="target_user_id" id="targetId">
+
+            <textarea name="question" rows="4" placeholder="Escribe tu mensaje secreto..." required></textarea>
+
+            <button type="submit">Enviar Anónimo</button>
+        </form>
+    </div>
+
+    <!-- Datos de usuarios -->
+    <script id="users-data" type="application/json">
+        <%- JSON.stringify(usuarios) %>
+    </script>
+
+    <script>
+        const usuarios = JSON.parse(document.getElementById('users-data').textContent);
+        const userInput = document.getElementById('userInput');
+        const resultsList = document.getElementById('resultsList');
+        const targetId = document.getElementById('targetId');
+        const userBadge = document.getElementById('userBadge');
+        const selectedName = document.getElementById('selectedName');
+
+        userInput.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            resultsList.innerHTML = '';
+
+            if (val.length < 1) {
+                resultsList.style.display = 'none';
+                return;
+            }
+
+            const filtered = usuarios.filter(u =>
+                (u.pushname && u.pushname.toLowerCase().includes(val)) ||
+                (u.phoneNumber && u.phoneNumber.includes(val))
+            );
+
+            if (filtered.length > 0) {
+                resultsList.style.display = 'block';
+                filtered.forEach(user => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<b>${user.pushname}</b> <br><small style="color:#999">${user.phoneNumber || ''}</small>`;
+                    li.onclick = () => {
+                        targetId.value = user.userId;
+                        selectedName.innerText = user.pushname;
+                        userBadge.style.display = 'block';
+                        userInput.value = '';
+                        resultsList.style.display = 'none';
+                    };
+                    resultsList.appendChild(li);
+                });
+            } else {
+                resultsList.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-box')) resultsList.style.display = 'none';
+        });
+    </script>
+</body>
+
+</html>
