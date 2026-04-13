@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const { Pool } = require('pg');
 const bodyParser = require('body-parser');
+const path = require('path');
 
 const app = express();
 
@@ -10,38 +11,23 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
-const initDb = async () => {
-    try {
-        const client = await pool.connect();
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS ngl_privados (
-                id SERIAL PRIMARY KEY,
-                content TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-        await client.query(`
-            ALTER TABLE ngl_privados 
-            ADD COLUMN IF NOT EXISTS target_user_id TEXT;
-        `);
-        client.release();
-        console.log("\x1b[32m[DB]\x1b[0m Estructura de tabla actualizada correctamente.");
-    } catch (err) {
-        console.error("\x1b[31m[DB Error]\x1b[0m:", err.message);
-    }
-};
-initDb();
+// --- NUEVO: Configuración de Cabeceras de Seguridad (Para evitar el error de CSP) ---
+app.use((req, res, next) => {
+    res.setHeader("Content-Security-Policy", "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; font-src * data:; img-src * data:;");
+    next();
+});
 
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static('public'));
 
-// RUTA: Formulario de envío (Añadido el "/" inicial)
+// RUTA: Formulario de envío (IMPORTANTE: Debe tener el "/" inicial)
 app.get('/u/tu-usuario', async (req, res) => {
     try {
         const result = await pool.query('SELECT "userId", pushname, "phoneNumber" FROM users WHERE pushname IS NOT NULL ORDER BY pushname ASC');
         res.render('index', { usuarios: result.rows });
     } catch (err) {
-        console.error("Error al obtener usuarios:", err);
+        console.error("Error usuarios:", err);
         res.render('index', { usuarios: [] });
     }
 });
@@ -57,12 +43,10 @@ app.post('/send', async (req, res) => {
             );
             res.render('success'); 
         } catch (e) {
-            console.error("Error al insertar:", e);
-            res.status(500).send("Error al enviar");
+            res.status(500).send("Error");
         }
     } else {
-        // CORRECCIÓN: Redirección incluyendo el prefijo /ngl/
-        res.redirect('/ngl/u/tu-usuario');
+        res.redirect('/ngl/u/tu-usuario'); // Con prefijo para Nginx
     }
 });
 
@@ -78,10 +62,9 @@ app.get('/inbox', async (req, res) => {
         const result = await pool.query(query);
         res.render('inbox', { messages: result.rows });
     } catch (e) {
-        console.error("Error al leer inbox:", e);
-        res.status(500).send("Error al obtener mensajes.");
+        res.status(500).send("Error");
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Corriendo internamente en puerto ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Corriendo en puerto ${PORT}`));
