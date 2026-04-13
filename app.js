@@ -13,8 +13,6 @@ const pool = new Pool({
 const initDb = async () => {
     try {
         const client = await pool.connect();
-        
-        // 1. Asegurar que la tabla existe
         await client.query(`
             CREATE TABLE IF NOT EXISTS ngl_privados (
                 id SERIAL PRIMARY KEY,
@@ -22,13 +20,10 @@ const initDb = async () => {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-
-        // 2. FORZAR la creación de la columna target_user_id si no existe
         await client.query(`
             ALTER TABLE ngl_privados 
             ADD COLUMN IF NOT EXISTS target_user_id TEXT;
         `);
-
         client.release();
         console.log("\x1b[32m[DB]\x1b[0m Estructura de tabla actualizada correctamente.");
     } catch (err) {
@@ -40,10 +35,9 @@ initDb();
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// RUTA: Formulario de envío (Carga usuarios de la tabla 'users')
-app.get('u/tu-usuario', async (req, res) => {
+// RUTA: Formulario de envío (Añadido el "/" inicial)
+app.get('/u/tu-usuario', async (req, res) => {
     try {
-        // Obtenemos los usuarios usando los nombres de columna de tu captura
         const result = await pool.query('SELECT "userId", pushname, "phoneNumber" FROM users WHERE pushname IS NOT NULL ORDER BY pushname ASC');
         res.render('index', { usuarios: result.rows });
     } catch (err) {
@@ -61,20 +55,18 @@ app.post('/send', async (req, res) => {
                 'INSERT INTO ngl_privados (content, target_user_id) VALUES ($1, $2)', 
                 [question, target_user_id || null]
             );
-            
-            // CAMBIO AQUÍ: En lugar de res.send, usamos res.render
             res.render('success'); 
-
         } catch (e) {
             console.error("Error al insertar:", e);
             res.status(500).send("Error al enviar");
         }
     } else {
-        res.redirect('/u/tu-usuario');
+        // CORRECCIÓN: Redirección incluyendo el prefijo /ngl/
+        res.redirect('/ngl/u/tu-usuario');
     }
 });
 
-// RUTA: Inbox (Con JOIN para ver a quién se mencionó)
+// RUTA: Inbox
 app.get('/inbox', async (req, res) => {
     try {
         const query = `
@@ -92,4 +84,4 @@ app.get('/inbox', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Corriendo en http://localhost:${PORT}/u/tu-usuario`));
+app.listen(PORT, () => console.log(`🚀 Corriendo internamente en puerto ${PORT}`));
