@@ -54,5 +54,9 @@ app.get('/ngl/inbox', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 NGL Running on Port ${PORT}`));
+const PORT = 3005; 
+
+app.listen(PORT, () => {
+    console.log(`🚀 NGL Running on Port ${PORT}`);
+    console.log(`🔗 URL: https://davcenter.servequake.com/ngl/u/tu-usuario`);
+});
