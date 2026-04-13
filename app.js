@@ -21,7 +21,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // --- RUTAS CON PREFIJO /ngl (Igual que stunbot) ---
 
-app.get('/ngl/u/tu-usuario', async (req, res) => {
+// --- CAMBIO EN LA RUTA DEL FORMULARIO ---
+app.get('/ngl/tu-usuario', async (req, res) => {
     try {
         const result = await pool.query('SELECT "userId", pushname, "phoneNumber" FROM users WHERE pushname IS NOT NULL ORDER BY pushname ASC');
         res.render('index', { usuarios: result.rows });
@@ -30,17 +31,19 @@ app.get('/ngl/u/tu-usuario', async (req, res) => {
     }
 });
 
+// --- CAMBIO EN LA REDIRECCIÓN DEL POST ---
 app.post('/ngl/send', async (req, res) => {
     const { question, target_user_id } = req.body;
     if (question) {
         try {
             await pool.query('INSERT INTO ngl_privados (content, target_user_id) VALUES ($1, $2)', [question, target_user_id || null]);
-            res.render('success'); 
+            res.render('success');
         } catch (e) {
             res.status(500).send("Error");
         }
     } else {
-        res.redirect('/ngl/u/tu-usuario');
+        // Asegúrate de quitar la /u/ aquí también
+        res.redirect('/ngl/tu-usuario');
     }
 });
 
