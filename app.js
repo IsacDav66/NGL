@@ -41,7 +41,7 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // RUTA: Formulario de envío (Carga usuarios de la tabla 'users')
-app.get('/u/tu-usuario', async (req, res) => {
+app.get('u/tu-usuario', async (req, res) => {
     try {
         // Obtenemos los usuarios usando los nombres de columna de tu captura
         const result = await pool.query('SELECT "userId", pushname, "phoneNumber" FROM users WHERE pushname IS NOT NULL ORDER BY pushname ASC');
