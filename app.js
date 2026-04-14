@@ -111,6 +111,31 @@ app.get('/ngl/inbox', async (req, res) => {
     }
 });
 
+
+
+app.get('/ngl/ver-logs', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM ngl_logs ORDER BY created_at DESC LIMIT 100');
+        
+        // Formatear una respuesta simple en HTML para ver los logs
+        let html = `<h1>Historial de Visitas (IPs)</h1><table border="1" cellpadding="10" style="border-collapse:collapse; font-family:sans-serif;">
+                    <tr><th>Fecha/Hora</th><th>IP Address</th><th>Dispositivo (User Agent)</th></tr>`;
+        
+        result.rows.forEach(log => {
+            html += `<tr>
+                        <td>${new Date(log.created_at).toLocaleString()}</td>
+                        <td><a href="https://ipinfo.io/${log.ip_address}" target="_blank">${log.ip_address}</a></td>
+                        <td style="font-size:12px;">${log.user_agent}</td>
+                     </tr>`;
+        });
+        
+        html += `</table>`;
+        res.send(html);
+    } catch (e) {
+        res.status(500).send("Error al obtener logs");
+    }
+});
+
 const PORT = 3005; 
 
 app.listen(PORT, () => {
